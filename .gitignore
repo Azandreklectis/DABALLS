@@ -1,0 +1,30 @@
+# Python environments
+.venv/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Testing and code quality
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# IDE files
+.idea/
+.vscode/
+
+# Local databases and logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
