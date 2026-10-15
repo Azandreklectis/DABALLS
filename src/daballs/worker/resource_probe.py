@@ -7,8 +7,12 @@ import psutil
 from daballs.controller.domain.worker import WorkerRegistration
 
 
-def probe_resources(worker_id: str) -> WorkerRegistration:
-    """Collect the current machine's hardware and resource information."""
+def probe_resources(
+    worker_id: str,
+    offered_cpu_cores: int = 0,
+    offered_memory_bytes: int = 0,
+) -> WorkerRegistration:
+    """Collect hardware information and configured resource offers."""
     memory = psutil.virtual_memory()
 
     return WorkerRegistration(
@@ -19,4 +23,6 @@ def probe_resources(worker_id: str) -> WorkerRegistration:
         cpu_logical_cores=psutil.cpu_count(logical=True) or 1,
         memory_total_bytes=memory.total,
         memory_available_bytes=memory.available,
+        offered_cpu_cores=offered_cpu_cores,
+        offered_memory_bytes=offered_memory_bytes,
     )

@@ -73,3 +73,14 @@ def test_probe_resources_falls_back_when_cpu_count_is_unavailable(
     registration = probe_resources("worker-test")
 
     assert registration.cpu_logical_cores == 1
+
+
+def test_probe_includes_configured_resource_offer() -> None:
+    registration = probe_resources(
+        worker_id="test-worker",
+        offered_cpu_cores=1,
+        offered_memory_bytes=1,
+    )
+
+    assert registration.offered_cpu_cores == 1
+    assert registration.offered_memory_bytes == 1

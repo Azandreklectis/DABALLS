@@ -20,10 +20,21 @@ class WorkerRegistration(BaseModel):
     memory_total_bytes: int = Field(gt=0)
     memory_available_bytes: int = Field(ge=0)
 
+    offered_cpu_cores: int = Field(ge=0, le=4096, default=0)
+    offered_memory_bytes: int = Field(ge=0, default=0)
+
+
     @model_validator(mode="after")
-    def validate_memory(self) -> "WorkerRegistration":
+    def validate_resources(self) -> "WorkerRegistration":
         if self.memory_available_bytes > self.memory_total_bytes:
             raise ValueError("Available memory cannot exceed total memory")
+
+        if self.offered_cpu_cores > self.cpu_logical_cores:
+            raise ValueError("Offered CPU cores cannot exceed logical CPU cores")
+
+        if self.offered_memory_bytes > self.memory_total_bytes:
+            raise ValueError("Offered memory cannot exceed total memory")
+
         return self
 
 

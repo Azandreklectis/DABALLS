@@ -28,6 +28,7 @@ class WorkerRegistry:
         return record
 
     def list_workers(self) -> list[WorkerRecord]:
+        self.mark_stale_workers()
         return list(self._workers.values())
 
     def clear(self) -> None:
@@ -50,6 +51,27 @@ class WorkerRegistry:
 
         self._workers[worker_id] = updated
         return updated
+
+    def mark_stale_workers(
+        self,
+        stale_after_seconds: float = 30.0,
+        now: datetime | None = None,
+    ) -> None:
+        """Mark workers offline when their last heartbeat is too old."""
+        if stale_after_seconds <= 0:
+            raise ValueError("Stale timeout must be positive")
+
+        current_time = now if now is not None else datetime.now(UTC)
+
+        for worker_id, record in list(self._workers.items()):
+            age_seconds = (
+                current_time - record.last_seen_at
+            ).total_seconds()
+
+            if record.status == "online" and age_seconds > stale_after_seconds:
+                self._workers[worker_id] = record.model_copy(
+                    update={"status": "offline"}
+                )
 
 
 worker_registry = WorkerRegistry()
