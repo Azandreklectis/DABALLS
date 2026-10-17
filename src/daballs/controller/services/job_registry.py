@@ -44,18 +44,25 @@ class JobRegistry:
 
         return None
 
+
     def report_result(
         self,
         job_id: str,
+        worker_id: str,
         result: int | None = None,
         error: str | None = None,
     ) -> JobRecord | None:
-        """Record a result for a job that is currently running."""
+        """Record a result from the worker assigned to a running job."""
         with self._lock:
             job = self._jobs.get(job_id)
 
             if job is None:
                 return None
+
+            if job.worker_id != worker_id:
+                raise PermissionError(
+                    "Only the assigned worker can report this job's result"
+                )
 
             if job.status != "running":
                 raise ValueError("Only running jobs can receive a result")

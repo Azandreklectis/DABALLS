@@ -1,9 +1,9 @@
 
-from daballs.controller.services.job_registry import job_registry
 from fastapi.testclient import TestClient
 
 from daballs.controller.domain.worker import WorkerRegistration
 from daballs.controller.main import app
+from daballs.controller.services.job_registry import job_registry
 from daballs.controller.services.worker_registry import worker_registry
 
 client = TestClient(app)
@@ -56,7 +56,10 @@ def test_job_submission_claim_and_result() -> None:
 
         result_response = client.post(
             f"/api/v1/jobs/{job_id}/result",
-            json={"result": 60},
+            json={
+                "worker_id": "job-test-worker",
+                "result": 60,
+            },
         )
 
         assert result_response.status_code == 200
@@ -116,7 +119,10 @@ def test_job_failure_can_be_reported() -> None:
 
         failure_response = client.post(
             f"/api/v1/jobs/{job_id}/result",
-            json={"error": "Test execution failure"},
+            json={
+                "worker_id": "job-test-worker",
+                "error": "Test execution failure",
+            },
         )
 
         assert failure_response.status_code == 200

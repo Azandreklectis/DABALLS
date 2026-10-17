@@ -21,6 +21,7 @@ class JobResultSubmission(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    worker_id: str = Field(min_length=1, max_length=128)
     result: int | None = None
     error: str | None = Field(default=None, min_length=1, max_length=1000)
 

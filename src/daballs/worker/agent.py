@@ -55,12 +55,14 @@ def process_one_job(
         updated = report_job_result(
             job.job_id,
             controller_url,
+            worker_id=worker_id,
             error=error,
         )
     else:
         updated = report_job_result(
             job.job_id,
             controller_url,
+            worker_id=worker_id,
             result=result,
         )
 

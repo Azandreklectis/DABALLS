@@ -67,6 +67,7 @@ def get_job(job_id: str) -> JobRecord:
     return job
 
 
+
 @router.post("/{job_id}/result", response_model=JobRecord)
 def report_job_result(
     job_id: str,
@@ -75,9 +76,12 @@ def report_job_result(
     try:
         job = job_registry.report_result(
             job_id,
+            worker_id=submission.worker_id,
             result=submission.result,
             error=submission.error,
         )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
