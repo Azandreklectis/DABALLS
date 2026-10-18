@@ -11,12 +11,14 @@ def probe_resources(
     worker_id: str,
     offered_cpu_cores: int = 0,
     offered_memory_bytes: int = 0,
+    display_name: str | None = None,
 ) -> WorkerRegistration:
     """Collect hardware information and configured resource offers."""
     memory = psutil.virtual_memory()
 
     return WorkerRegistration(
         worker_id=worker_id,
+        display_name=display_name,
         hostname=socket.gethostname(),
         os_name=platform.system(),
         architecture=platform.machine(),

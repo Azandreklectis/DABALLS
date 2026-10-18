@@ -11,6 +11,7 @@ class WorkerRegistration(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     worker_id: str = Field(min_length=1, max_length=128)
+    display_name: str | None = Field(default=None, max_length=100)
     hostname: str = Field(min_length=1, max_length=255)
     os_name: str = Field(min_length=1, max_length=100)
     architecture: str = Field(min_length=1, max_length=100)

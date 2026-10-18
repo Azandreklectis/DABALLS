@@ -5,6 +5,9 @@ import {
 } from 'react-router-dom';
 import AppShell from '../layout/AppShell';
 import PageHeader from '../layout/PageHeader';
+import JobsPage from "../features/jobs/JobsPage";
+import WorkersPage from "../features/workers/WorkersPage";
+import WorkerRegistrationPage from "../features/workers/WorkerRegistrationPage";
 
 function OverviewPlaceholder() {
   return (
@@ -16,25 +19,6 @@ function OverviewPlaceholder() {
   );
 }
 
-function WorkersPlaceholder() {
-  return (
-    <PageHeader
-      eyebrow="CLUSTER / NODES"
-      title="Workers"
-      description="Inspect registered workers and their offered resources."
-    />
-  );
-}
-
-function JobsPlaceholder() {
-  return (
-    <PageHeader
-      eyebrow="CLUSTER / WORKLOADS"
-      title="Jobs"
-      description="Submit supported workloads and inspect their execution results."
-    />
-  );
-}
 
 function SettingsPlaceholder() {
   return (
@@ -62,8 +46,9 @@ const routes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <OverviewPlaceholder /> },
-      { path: 'workers', element: <WorkersPlaceholder /> },
-      { path: 'jobs', element: <JobsPlaceholder /> },
+      { path: 'workers/register', element: <WorkerRegistrationPage /> },
+      { path: 'workers', element: <WorkersPage /> },
+      { path: 'jobs', element: <JobsPage /> },
       { path: 'settings', element: <SettingsPlaceholder /> },
       { path: '*', element: <NotFoundPlaceholder /> },
     ],

@@ -25,6 +25,12 @@ export const navigationItems: NavigationItem[] = [
     description: 'Workload queue and results',
   },
   {
+    label: 'Join network',
+    path: '/workers/register',
+    section: 'main',
+    description: 'Configure a contributing computer',
+  },
+  {
     label: 'Settings',
     path: '/settings',
     section: 'system',

@@ -33,6 +33,7 @@ def test_run_agent_probes_and_registers_worker(
             worker_id: str,
             offered_cpu_cores: int = 0,
             offered_memory_bytes: int = 0,
+            display_name: str | None = None,
     ) -> WorkerRegistration:
         assert worker_id == "worker-test"
         return registration
@@ -70,6 +71,7 @@ def test_run_forever_sends_heartbeat_and_stops(
             controller_url: str,
             offered_cpu_cores: int = 0,
             offered_memory_bytes: int = 0,
+            display_name: str | None = None,
     ) -> WorkerRecord:
         calls["registration"] += 1
         return WorkerRecord(

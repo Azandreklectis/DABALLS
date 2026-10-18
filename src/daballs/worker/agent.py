@@ -24,12 +24,14 @@ def run_agent(
     controller_url: str,
     offered_cpu_cores: int = 0,
     offered_memory_bytes: int = 0,
+    display_name: str | None = None,
 ) -> WorkerRecord:
     """Probe resources and register this worker with the controller."""
     registration = probe_resources(
         worker_id,
         offered_cpu_cores=offered_cpu_cores,
         offered_memory_bytes=offered_memory_bytes,
+        display_name=display_name,
     )
 
     return register_with_controller(registration, controller_url)
@@ -79,6 +81,7 @@ def run_forever(
     stop_event: Event | None = None,
     offered_cpu_cores: int = 0,
     offered_memory_bytes: int = 0,
+    display_name: str | None = None,
 ) -> None:
     """Register a worker and keep it alive with periodic heartbeats."""
     if heartbeat_interval <= 0:
@@ -91,6 +94,7 @@ def run_forever(
         controller_url,
         offered_cpu_cores=offered_cpu_cores,
         offered_memory_bytes=offered_memory_bytes,
+        display_name=display_name,
     )
     logger.info("Worker %s registered with controller", record.worker_id)
 
@@ -112,6 +116,7 @@ def run_forever(
                         controller_url,
                         offered_cpu_cores=offered_cpu_cores,
                         offered_memory_bytes=offered_memory_bytes,
+                        display_name=display_name,
                     )
                     logger.info(
                         "Worker %s registered again",
@@ -145,6 +150,12 @@ def main() -> None:
         "--worker-id",
         default=None,
         help="Worker ID. If omitted, use the persistent local identity.",
+    )
+
+    parser.add_argument(
+        "--display-name",
+        default=None,
+        help="Human-readable name for this worker.",
     )
 
     parser.add_argument(
@@ -185,6 +196,7 @@ def main() -> None:
             controller_url=args.controller_url,
             offered_cpu_cores=args.offer_cpu_cores,
             offered_memory_bytes=args.offer_memory_mib * 1024**2,
+            display_name=args.display_name,
         )
     except KeyboardInterrupt:
         logger.info("Worker agent stopped")
