@@ -1,0 +1,30 @@
+:root {
+  color-scheme: light;
+
+  --color-wine: #6F1D1B;
+  --color-camel: #BB9457;
+  --color-coffee: #432818;
+  --color-chocolate: #99582A;
+  --color-apricot: #FFE6A7;
+
+  --color-paper: #FFF9EF;
+  --color-surface: #FFFDF8;
+  --color-text: #2C211A;
+  --color-muted: #786B5D;
+  --color-border: #E4D8C7;
+
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body: Arial, Helvetica, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  --border-subtle: 1px solid var(--color-border);
+  --radius-small: 4px;
+}

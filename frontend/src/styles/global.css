@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--color-paper);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-chocolate);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+}
+
+.startup {
+  width: min(760px, calc(100% - 48px));
+  margin: 12vh auto;
+  padding: var(--space-8) 0;
+}
+
+.startup__eyebrow,
+.startup__status {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+}
+
+.startup__eyebrow {
+  color: var(--color-wine);
+}
+
+.startup h1 {
+  margin: var(--space-8) 0;
+  color: var(--color-coffee);
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 10vw, 6.5rem);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+}
+
+.startup h1 span {
+  color: var(--color-chocolate);
+}
+
+.startup__description {
+  color: var(--color-muted);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+.startup__rule {
+  width: 100%;
+  height: 1px;
+  margin: var(--space-8) 0;
+  background: var(--color-border);
+}
+
+.startup__status {
+  color: var(--color-muted);
+}
+
+.startup__status span {
+  color: var(--color-camel);
+}
