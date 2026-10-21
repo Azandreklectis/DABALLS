@@ -78,6 +78,7 @@ def report_job_result(
             job_id,
             worker_id=submission.worker_id,
             result=submission.result,
+            result_data=submission.result_data,
             error=submission.error,
         )
     except PermissionError as exc:

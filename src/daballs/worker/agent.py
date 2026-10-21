@@ -49,7 +49,7 @@ def process_one_job(
     logger.info("Claimed job %s", job.job_id)
 
     try:
-        result = execute_job(job)
+        result = execute_job(job, controller_url)
     except Exception as exc:
         error = str(exc)[:1000] or "Job execution failed"
         logger.exception("Job %s failed", job.job_id)
@@ -61,12 +61,20 @@ def process_one_job(
             error=error,
         )
     else:
-        updated = report_job_result(
-            job.job_id,
-            controller_url,
-            worker_id=worker_id,
-            result=result,
-        )
+        if isinstance(result, dict):
+            updated = report_job_result(
+                job.job_id,
+                controller_url,
+                worker_id=worker_id,
+                result_data=result,
+            )
+        else:
+            updated = report_job_result(
+                job.job_id,
+                controller_url,
+                worker_id=worker_id,
+                result=result,
+            )
 
     logger.info(
         "Job %s finished with status %s",

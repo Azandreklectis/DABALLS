@@ -12,6 +12,9 @@ export interface Worker {
   memory_total_bytes: number;
   memory_available_bytes: number;
 
+  disk_total_bytes?: number | null;
+  disk_free_bytes?: number | null;
+
   offered_cpu_cores: number;
   offered_memory_bytes: number;
 
@@ -30,6 +33,9 @@ export interface WorkerRegistration {
   cpu_logical_cores: number;
   memory_total_bytes: number;
   memory_available_bytes: number;
+
+  disk_total_bytes?: number | null;
+  disk_free_bytes?: number | null;
 
   offered_cpu_cores?: number;
   offered_memory_bytes?: number;

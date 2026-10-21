@@ -74,6 +74,7 @@ def report_job_result(
     *,
     worker_id: str,
     result: int | None = None,
+    result_data: dict | None = None,
     error: str | None = None,
 ) -> JobRecord:
     """Report a result or execution failure for the assigned worker."""
@@ -85,6 +86,7 @@ def report_job_result(
     submission = JobResultSubmission(
         worker_id=worker_id,
         result=result,
+        result_data=result_data,
         error=error[:1000] if error is not None else None,
     )
 

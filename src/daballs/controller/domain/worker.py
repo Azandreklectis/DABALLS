@@ -21,12 +21,16 @@ class WorkerRegistration(BaseModel):
     memory_total_bytes: int = Field(gt=0)
     memory_available_bytes: int = Field(ge=0)
 
+    disk_total_bytes: int | None = Field(default=None, gt=0)
+    disk_free_bytes: int | None = Field(default=None, ge=0)
+
     offered_cpu_cores: int = Field(ge=0, le=4096, default=0)
     offered_memory_bytes: int = Field(ge=0, default=0)
 
-
     @model_validator(mode="after")
     def validate_resources(self) -> "WorkerRegistration":
+        """Validate that resource values are within valid limits."""
+
         if self.memory_available_bytes > self.memory_total_bytes:
             raise ValueError("Available memory cannot exceed total memory")
 
@@ -35,6 +39,13 @@ class WorkerRegistration(BaseModel):
 
         if self.offered_memory_bytes > self.memory_total_bytes:
             raise ValueError("Offered memory cannot exceed total memory")
+
+        if (
+            self.disk_total_bytes is not None
+            and self.disk_free_bytes is not None
+            and self.disk_free_bytes > self.disk_total_bytes
+        ):
+            raise ValueError("Free disk space cannot exceed total disk space")
 
         return self
 

@@ -33,6 +33,13 @@ def test_probe_resources_returns_registration_with_detected_values(
             available=8 * 1024**3,
         ),
     )
+    monkeypatch.setattr(
+        "daballs.worker.resource_probe.psutil.disk_usage",
+        lambda path: SimpleNamespace(
+            total=1000 * 1024**3,
+            free=948 * 1024**3,
+        ),
+    )
 
     registration = probe_resources("worker-test")
 
@@ -44,6 +51,8 @@ def test_probe_resources_returns_registration_with_detected_values(
     assert registration.cpu_logical_cores == 8
     assert registration.memory_total_bytes == 16 * 1024**3
     assert registration.memory_available_bytes == 8 * 1024**3
+    assert registration.disk_total_bytes == 1000 * 1024**3
+    assert registration.disk_free_bytes == 948 * 1024**3
 
 
 def test_probe_resources_falls_back_when_cpu_count_is_unavailable(
@@ -67,12 +76,24 @@ def test_probe_resources_falls_back_when_cpu_count_is_unavailable(
     )
     monkeypatch.setattr(
         "daballs.worker.resource_probe.psutil.virtual_memory",
-        lambda: SimpleNamespace(total=1024, available=512),
+        lambda: SimpleNamespace(
+            total=1024,
+            available=512,
+        ),
+    )
+    monkeypatch.setattr(
+        "daballs.worker.resource_probe.psutil.disk_usage",
+        lambda path: SimpleNamespace(
+            total=1000 * 1024**3,
+            free=500 * 1024**3,
+        ),
     )
 
     registration = probe_resources("worker-test")
 
     assert registration.cpu_logical_cores == 1
+    assert registration.disk_total_bytes == 1000 * 1024**3
+    assert registration.disk_free_bytes == 500 * 1024**3
 
 
 def test_probe_includes_configured_resource_offer() -> None:

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from daballs.controller.api.v1.artifacts import router as artifacts_router
 from daballs.controller.api.v1.jobs import router as jobs_router
 from daballs.controller.api.v1.workers import router as workers_router
 from daballs.controller.services.worker_monitor import (
@@ -45,3 +46,4 @@ def health_check() -> dict[str, str]:
 
 app.include_router(workers_router)
 app.include_router(jobs_router)
+app.include_router(artifacts_router)

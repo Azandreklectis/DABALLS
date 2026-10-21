@@ -67,7 +67,8 @@ def test_process_one_job_reports_execution_failure(monkeypatch) -> None:
     ) -> JobRecord:
         return job
 
-    def fake_execute(received_job: JobRecord) -> int:
+    def fake_execute(received_job: JobRecord,
+                        controller_url: str,) -> int:
         raise RuntimeError("Simulated execution failure")
 
     def fake_report(

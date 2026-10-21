@@ -1,6 +1,7 @@
 
 from datetime import UTC, datetime
 from threading import Lock
+from typing import Any
 
 from daballs.controller.domain.job import JobRecord, JobSubmission
 
@@ -29,7 +30,7 @@ class JobRegistry:
             return self._jobs.get(job_id)
 
     def claim_next(self, worker_id: str) -> JobRecord | None:
-        """Atomically claim the oldest queued job for this worker."""
+        """Atomically claim the oldest queued job assigned to this worker."""
         with self._lock:
             for job_id, job in self._jobs.items():
                 if job.worker_id == worker_id and job.status == "queued":
@@ -44,15 +45,15 @@ class JobRegistry:
 
         return None
 
-
     def report_result(
         self,
         job_id: str,
         worker_id: str,
         result: int | None = None,
+        result_data: dict[str, Any] | None = None,
         error: str | None = None,
     ) -> JobRecord | None:
-        """Record a result from the worker assigned to a running job."""
+        """Record a result or failure from the worker assigned to a running job."""
         with self._lock:
             job = self._jobs.get(job_id)
 
@@ -67,13 +68,19 @@ class JobRegistry:
             if job.status != "running":
                 raise ValueError("Only running jobs can receive a result")
 
-            if (result is None) == (error is None):
-                raise ValueError("Provide exactly one of result or error")
+            supplied = sum(
+                value is not None for value in (result, result_data, error)
+            )
+            if supplied != 1:
+                raise ValueError(
+                    "Provide exactly one of result, result_data, or error"
+                )
 
             updated = job.model_copy(
                 update={
-                    "status": "completed" if error is None else "failed",
+                    "status": "failed" if error is not None else "completed",
                     "result": result,
+                    "result_data": result_data,
                     "error": error,
                     "updated_at": datetime.now(UTC),
                 }
