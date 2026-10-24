@@ -7,3 +7,7 @@ yeh back end ke liye
 cd ~/projects/daballs/frontend
 npm run dev -- --host 0.0.0.0
 yeh front end ke liye
+
+
+cloudflared tunnel --url http://127.0.0.1:8000
+yeh cloudflare tunnel
