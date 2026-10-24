@@ -23,7 +23,7 @@ export default function JobTable({
           <tr>
             <th>JOB</th>
             <th>WORKLOAD</th>
-            <th>INPUT</th>
+            <th>INPUT / PACKAGE</th>
             <th>WORKER</th>
             <th>SUBMITTED</th>
             <th>STATUS</th>

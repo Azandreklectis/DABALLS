@@ -2,6 +2,7 @@
 
 import hashlib
 import io
+import os
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -12,6 +13,12 @@ from daballs.workloads.package_validator import (
     WorkloadPackageError,
     validate_workload_package,
 )
+
+
+def _auth_headers() -> dict[str, str]:
+    """Return controller authentication headers when a token is configured."""
+    token = os.environ.get("DABALLS_API_TOKEN")
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def download_artifact(artifact_id: str, controller_url: str) -> bytes:
@@ -26,7 +33,7 @@ def download_artifact(artifact_id: str, controller_url: str) -> bytes:
         f"{controller_url.rstrip('/')}"
         f"/api/v1/artifacts/{artifact_id}"
     )
-    response = httpx.get(url, timeout=30.0)
+    response = httpx.get(url, timeout=30.0, headers=_auth_headers())
     response.raise_for_status()
 
     archive_bytes = response.content

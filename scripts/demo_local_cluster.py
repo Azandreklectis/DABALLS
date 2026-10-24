@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+"""Run a local DABALLS controller with two worker processes and verify jobs."""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+HOST = "127.0.0.1"
+PORT = int(os.environ.get("DABALLS_DEMO_PORT", "8765"))
+BASE_URL = f"http://{HOST}:{PORT}"
+TIMEOUT_SECONDS = 75
+WORKERS = [
+    {
+        "id": "demo-worker-a",
+        "name": "Local Demo Worker A",
+        "cpu": 1,
+        "memory_mib": 1024,
+    },
+    {
+        "id": "demo-worker-b",
+        "name": "Local Demo Worker B",
+        "cpu": 1,
+        "memory_mib": 1024,
+    },
+]
+JOBS = [
+    {"workload_type": "sum_integers", "input_data": [1, 2, 3]},
+    {"workload_type": "sum_integers", "input_data": [10, 20, 30]},
+]
+
+
+def request_json(
+    path: str,
+    *,
+    method: str = "GET",
+    payload: dict | None = None,
+    timeout: float = 5,
+):
+    data = None if payload is None else json.dumps(payload).encode()
+    headers = {"Accept": "application/json"}
+    token = os.environ.get("DABALLS_API_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+
+    request = urllib.request.Request(
+        f"{BASE_URL}{path}",
+        data=data,
+        headers=headers,
+        method=method,
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        body = response.read()
+        return json.loads(body) if body else None
+
+
+def wait_for_controller(process: subprocess.Popen, log_path: Path) -> None:
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError(
+                f"Controller exited early. Log:\n{log_path.read_text(errors='replace')}"
+            )
+        try:
+            health = request_json("/health", timeout=1)
+            if health.get("status") == "ok":
+                print(f"[OK] Controller ready at {BASE_URL}")
+                return
+        except (OSError, urllib.error.URLError, TimeoutError, ValueError):
+            time.sleep(0.25)
+
+    raise TimeoutError(
+        f"Controller did not become ready. Log:\n{log_path.read_text(errors='replace')}"
+    )
+
+
+def wait_for_workers(worker_ids: set[str]) -> None:
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        records = request_json("/api/v1/workers")
+        online = {
+            worker["worker_id"]
+            for worker in records
+            if worker["status"] == "online"
+        }
+        if worker_ids <= online:
+            print(f"[OK] Both workers registered: {', '.join(sorted(worker_ids))}")
+            return
+        time.sleep(0.25)
+
+    raise TimeoutError(f"Workers failed to register: {worker_ids}")
+
+
+def main() -> int:
+    processes: list[tuple[str, subprocess.Popen, object]] = []
+    log_directory = tempfile.TemporaryDirectory(prefix="daballs-demo-")
+    logs = Path(log_directory.name)
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        f"{ROOT / 'src'}{os.pathsep}{existing_pythonpath}"
+        if existing_pythonpath
+        else str(ROOT / "src")
+    )
+    env.setdefault("PYTHONUNBUFFERED", "1")
+
+    try:
+        # Fail early if another service already owns the chosen port.
+        with socket.socket() as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((HOST, PORT))
+
+        controller_log_path = logs / "controller.log"
+        controller_log = controller_log_path.open("w")
+        controller = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "daballs.controller.main:app",
+                "--host",
+                HOST,
+                "--port",
+                str(PORT),
+                "--log-level",
+                "warning",
+            ],
+            cwd=ROOT,
+            env=env,
+            stdout=controller_log,
+            stderr=subprocess.STDOUT,
+        )
+        processes.append(("controller", controller, controller_log))
+        wait_for_controller(controller, controller_log_path)
+
+        for worker in WORKERS:
+            log_path = logs / f"{worker['id']}.log"
+            log_file = log_path.open("w")
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "daballs.worker.agent",
+                    "--worker-id",
+                    worker["id"],
+                    "--display-name",
+                    worker["name"],
+                    "--controller-url",
+                    BASE_URL,
+                    "--offer-cpu-cores",
+                    str(worker["cpu"]),
+                    "--offer-memory-mib",
+                    str(worker["memory_mib"]),
+                ],
+                cwd=ROOT,
+                env=env,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+            )
+            processes.append((worker["id"], process, log_file))
+            print(f"[START] {worker['name']} (PID {process.pid})")
+
+        expected_workers = {worker["id"] for worker in WORKERS}
+        wait_for_workers(expected_workers)
+
+        created_jobs = []
+        for workload in JOBS:
+            job = request_json(
+                "/api/v1/jobs",
+                method="POST",
+                payload=workload,
+            )
+            created_jobs.append(job)
+            print(
+                f"[SUBMIT] {job['job_id'][:8]} assigned to "
+                f"{job['worker_id']}: {workload['input_data']}"
+            )
+
+        deadline = time.monotonic() + TIMEOUT_SECONDS
+        final_jobs = {}
+        while time.monotonic() < deadline:
+            current = request_json("/api/v1/jobs")
+            by_id = {job["job_id"]: job for job in current}
+            final_jobs = {
+                job["job_id"]: by_id.get(job["job_id"], job)
+                for job in created_jobs
+            }
+            if all(
+                job["status"] in {"completed", "failed"}
+                for job in final_jobs.values()
+            ):
+                break
+            for name, process, _ in processes:
+                if process.poll() is not None:
+                    raise RuntimeError(f"{name} exited unexpectedly")
+            time.sleep(0.5)
+
+        print("\n========== JOB RESULTS ==========")
+        all_completed = True
+        for job in created_jobs:
+            result = final_jobs.get(job["job_id"], job)
+            print(f"Job:    {result['job_id']}")
+            print(f"Worker: {result['worker_id']}")
+            print(f"Status: {result['status']}")
+            print(f"Result: {result.get('result')}")
+            if result.get("error"):
+                print(f"Error:  {result['error']}")
+            print()
+            all_completed &= result["status"] == "completed"
+
+        assigned_workers = {
+            final_jobs[job["job_id"]]["worker_id"]
+            for job in created_jobs
+            if job["job_id"] in final_jobs
+        }
+        distributed = len(assigned_workers) == len(WORKERS)
+
+        if all_completed:
+            print("[PASS] Both jobs completed successfully.")
+        else:
+            print("[FAIL] At least one job did not complete successfully.")
+
+        if distributed:
+            print("[PASS] Jobs were assigned across both worker processes.")
+        else:
+            print(
+                "[INFO] Jobs did not use both workers in this run. "
+                "Inspect scheduler placement and worker logs."
+            )
+
+        return 0 if all_completed and distributed else 1
+
+    except (OSError, urllib.error.URLError, TimeoutError, RuntimeError, ValueError) as exc:
+        print(f"\n[FAIL] {exc}", file=sys.stderr)
+        print(f"Diagnostic logs: {logs}", file=sys.stderr)
+        return 1
+    finally:
+        for name, process, _ in reversed(processes):
+            if process.poll() is None:
+                process.terminate()
+        for name, process, _ in reversed(processes):
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        for _, _, log_file in processes:
+            log_file.close()
+        # Preserve logs if troubleshooting is needed; show their location on failure.
+        log_directory.cleanup()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

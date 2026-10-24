@@ -3,7 +3,6 @@ import type { Worker } from "../../types/worker";
 import {
   formatBytes,
   getWorkerLabel,
-  getWorkerMemoryUsage,
   getWorkerOperatingSystem,
   getWorkerShortId,
 } from "./worker-utils";
@@ -24,17 +23,14 @@ export default function WorkerTable({
           <tr>
             <th>WORKER</th>
             <th>PLATFORM</th>
-            <th>CPU</th>
-            <th>MEMORY</th>
-            <th>OFFERED RESOURCES</th>
+            <th>OFFERED CPU</th>
+            <th>OFFERED MEMORY</th>
             <th>STATUS</th>
           </tr>
         </thead>
 
         <tbody>
           {workers.map((worker) => {
-            const memoryUsage = getWorkerMemoryUsage(worker);
-
             return (
               <tr
                 key={worker.worker_id}
@@ -66,42 +62,15 @@ export default function WorkerTable({
                 <td>{getWorkerOperatingSystem(worker)}</td>
 
                 <td>
-                  <strong>{worker.cpu_logical_cores}</strong>
+                  <strong>{worker.offered_cpu_cores}</strong>
                   <span className="worker-secondary">
-                    {" "}logical cores
+                    {worker.offered_cpu_cores === 1 ? "core" : "cores"}
                   </span>
                 </td>
 
                 <td>
                   <div className="worker-memory">
-                    <div className="worker-memory-label">
-                      <strong>{formatBytes(worker.memory_available_bytes)}</strong>
-                      <span>
-                        / {formatBytes(worker.memory_total_bytes)}
-                      </span>
-                    </div>
-                    <div
-                      className="worker-memory-track"
-                      role="progressbar"
-                      aria-label={`${getWorkerLabel(worker)} memory used`}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(memoryUsage)}
-                    >
-                      <span style={{ width: `${memoryUsage}%` }} />
-                    </div>
-                    <span className="worker-secondary">
-                      {Math.round(memoryUsage)}% used
-                    </span>
-                  </div>
-                </td>
-
-                <td>
-                  <div className="worker-offers">
-                    <span>{worker.offered_cpu_cores} CPU</span>
-                    <span>
-                      {formatBytes(worker.offered_memory_bytes)} RAM
-                    </span>
+                    <strong>{formatBytes(worker.offered_memory_bytes)}</strong>
                   </div>
                 </td>
 

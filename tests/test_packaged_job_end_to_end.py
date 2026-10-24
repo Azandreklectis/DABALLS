@@ -145,6 +145,7 @@ def test_packaged_job_runs_through_controller_and_worker(
     def fake_download_get(
         url: str,
         timeout: float,
+        headers: dict | None = None,
     ) -> httpx.Response:
         assert timeout == 30
         assert url.endswith(f"/api/v1/artifacts/{artifact_id}")

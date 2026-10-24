@@ -1,4 +1,6 @@
 
+import os
+
 import httpx
 
 from daballs.controller.domain.job import (
@@ -9,6 +11,12 @@ from daballs.controller.domain.worker import (
     WorkerRecord,
     WorkerRegistration,
 )
+
+
+def _auth_headers() -> dict[str, str]:
+    """Return controller authentication headers when a token is configured."""
+    token = os.environ.get("DABALLS_API_TOKEN")
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def register_with_controller(
@@ -25,6 +33,7 @@ def register_with_controller(
         url,
         json=registration.model_dump(mode="json"),
         timeout=5.0,
+        headers=_auth_headers(),
     )
     response.raise_for_status()
 
@@ -41,7 +50,7 @@ def send_heartbeat(
         f"/api/v1/workers/{worker_id}/heartbeat"
     )
 
-    response = httpx.post(url, timeout=5.0)
+    response = httpx.post(url, timeout=5.0, headers=_auth_headers())
     response.raise_for_status()
 
     return WorkerRecord.model_validate(response.json())
@@ -58,6 +67,7 @@ def claim_next_job(
         url,
         params={"worker_id": worker_id},
         timeout=5.0,
+        headers=_auth_headers(),
     )
     response.raise_for_status()
 
@@ -94,6 +104,7 @@ def report_job_result(
         url,
         json=submission.model_dump(mode="json"),
         timeout=5.0,
+        headers=_auth_headers(),
     )
     response.raise_for_status()
 

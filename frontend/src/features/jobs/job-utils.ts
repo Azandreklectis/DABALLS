@@ -18,7 +18,11 @@ export function getJobStatusLabel(status: JobStatus): string {
   return labels[status];
 }
 
-export function formatJobInput(input: number[]): string {
+export function formatJobInput(input: number[] | null): string {
+  if (input === null) {
+    return "Input bundled in workload package";
+  }
+
   if (input.length <= 4) {
     return input.join(", ");
   }

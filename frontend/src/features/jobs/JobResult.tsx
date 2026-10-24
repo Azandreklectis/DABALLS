@@ -1,4 +1,3 @@
-
 import type { Job } from "../../types/job";
 
 interface JobResultProps {
@@ -28,6 +27,15 @@ export default function JobResult({ job }: JobResultProps) {
     );
   }
 
+  if (job.result_data != null) {
+    return (
+      <div className="job-result job-result--success" role="status">
+        <span className="job-result-label">PACKAGED WORKLOAD RESULT</span>
+        <pre className="job-result-json">{JSON.stringify(job.result_data, null, 2)}</pre>
+      </div>
+    );
+  }
+
   if (job.result === null) {
     return (
       <div className="job-result job-result--pending" role="status">
@@ -41,7 +49,9 @@ export default function JobResult({ job }: JobResultProps) {
     <div className="job-result job-result--success" role="status">
       <span className="job-result-label">COMPUTATION RESULT</span>
       <strong>{job.result}</strong>
-      <p>Sum of {job.input_data.length} input integers.</p>
+      <p>{job.workload_type === "sum_integers"
+        ? `Sum of ${job.input_data?.length ?? 0} input integers.`
+        : "Packaged workload completed successfully."}</p>
     </div>
   );
 }

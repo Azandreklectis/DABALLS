@@ -32,8 +32,13 @@ export default function WorkersPage() {
     0,
   );
 
-  const totalMemory = workers.reduce(
-    (total, worker) => total + worker.memory_total_bytes,
+  const totalMemoryOffered = workers.reduce(
+    (total, worker) => total + worker.offered_memory_bytes,
+    0,
+  );
+  const onlineMemoryOffered = workers.reduce(
+    (total, worker) =>
+      total + (worker.status === "online" ? worker.offered_memory_bytes : 0),
     0,
   );
 
@@ -75,13 +80,17 @@ export default function WorkersPage() {
         </article>
 
         <article className="worker-metric">
-          <span>TOTAL MEMORY</span>
+          <span>OFFERED MEMORY</span>
           <strong>
             {loading
               ? "—"
-              : `${(totalMemory / 1024 ** 3).toFixed(1)} GB`}
+              : `${(totalMemoryOffered / 1024 ** 3).toFixed(2)} GB`}
           </strong>
-          <small>Reported physical memory</small>
+          <small>
+            {loading
+              ? "Loading capacity"
+              : `${(onlineMemoryOffered / 1024 ** 3).toFixed(2)} GB online`}
+          </small>
         </article>
       </div>
 

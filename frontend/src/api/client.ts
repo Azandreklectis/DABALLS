@@ -1,6 +1,10 @@
 
 const API_BASE_URL = "/api";
 
+// This Vite variable is intended for local/demo configuration only.
+// Values bundled into browser JavaScript are public, not production secrets.
+const API_TOKEN = import.meta.env.VITE_DABALLS_API_TOKEN?.trim();
+
 export class ApiError extends Error {
   status: number;
 
@@ -22,6 +26,7 @@ export async function apiRequest<T>(
       ...options,
       headers: {
         Accept: "application/json",
+        ...(API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {}),
         ...options.headers,
       },
     });

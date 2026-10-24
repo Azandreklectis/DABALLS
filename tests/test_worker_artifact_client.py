@@ -43,7 +43,7 @@ def test_download_artifact_verifies_hash(monkeypatch) -> None:
     package = make_package()
     artifact_id = hashlib.sha256(package).hexdigest()
 
-    def fake_get(url, timeout):
+    def fake_get(url, timeout, headers=None):
         assert url.endswith(f"/api/v1/artifacts/{artifact_id}")
         return httpx.Response(200, content=package, request=httpx.Request("GET", url))
 
@@ -56,7 +56,7 @@ def test_download_artifact_rejects_hash_mismatch(monkeypatch) -> None:
     package = make_package()
     wrong_id = "a" * 64
 
-    def fake_get(url, timeout):
+    def fake_get(url, timeout, headers=None):
         return httpx.Response(
             200,
             content=package,

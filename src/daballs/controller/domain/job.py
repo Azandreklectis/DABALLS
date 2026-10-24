@@ -1,4 +1,3 @@
-
 from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import uuid4
@@ -6,19 +5,30 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ArtifactId = str
+DEFAULT_REQUIRED_CPU_CORES = 1
+DEFAULT_REQUIRED_MEMORY_BYTES = 512 * 1024**2
 
 
 class JobSubmission(BaseModel):
-    """A request to run a supported workload on a chosen worker."""
+    """A request to run a workload on a chosen or automatically selected worker."""
 
     model_config = ConfigDict(extra="forbid")
 
-    worker_id: str = Field(min_length=1, max_length=128)
+    worker_id: str | None = Field(default=None, min_length=1, max_length=128)
     workload_type: Literal["sum_integers", "python_package"]
     input_data: list[int] | None = Field(default=None, min_length=1, max_length=10_000)
     artifact_id: ArtifactId | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
+    )
+    required_cpu_cores: int = Field(
+        default=DEFAULT_REQUIRED_CPU_CORES,
+        ge=1,
+        le=4096,
+    )
+    required_memory_bytes: int = Field(
+        default=DEFAULT_REQUIRED_MEMORY_BYTES,
+        ge=1,
     )
 
     @model_validator(mode="after")
@@ -32,7 +42,9 @@ class JobSubmission(BaseModel):
             if self.artifact_id is None:
                 raise ValueError("python_package requires artifact_id")
             if self.input_data is not None:
-                raise ValueError("python_package uses the input bundled in its artifact")
+                raise ValueError(
+                    "python_package uses the input bundled in its artifact"
+                )
         return self
 
 
@@ -67,6 +79,15 @@ class JobRecord(BaseModel):
     workload_type: Literal["sum_integers", "python_package"]
     input_data: list[int] | None = None
     artifact_id: ArtifactId | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    required_cpu_cores: int = Field(
+        default=DEFAULT_REQUIRED_CPU_CORES,
+        ge=1,
+        le=4096,
+    )
+    required_memory_bytes: int = Field(
+        default=DEFAULT_REQUIRED_MEMORY_BYTES,
+        ge=1,
+    )
     status: Literal["queued", "running", "completed", "failed"] = "queued"
     result: int | None = None
     result_data: dict[str, Any] | None = None

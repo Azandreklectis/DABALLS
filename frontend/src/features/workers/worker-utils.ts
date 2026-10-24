@@ -23,7 +23,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export function getWorkerLabel(worker: Worker): string {
-  return worker.hostname || worker.worker_id;
+  return worker.display_name?.trim() || worker.hostname || worker.worker_id;
 }
 
 export function getWorkerShortId(workerId: string): string {

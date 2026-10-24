@@ -1,0 +1,73 @@
+services:
+  controller:
+    build: .
+    command: ["uvicorn", "daballs.controller.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DABALLS_API_TOKEN: ${DABALLS_API_TOKEN:?Set DABALLS_API_TOKEN in .env}
+      DABALLS_DATABASE_PATH: /data/controller.sqlite3
+      DABALLS_ARTIFACT_DIR: /data/artifacts
+      DABALLS_JOB_RUNTIME_DIR: /data/job-runtime
+    ports:
+      - "8000:8000"
+    volumes:
+      - daballs-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  worker-a:
+    build: .
+    command:
+      - python
+      - -m
+      - daballs.worker.agent
+      - --worker-id
+      - compose-worker-a
+      - --display-name
+      - Compose Worker A
+      - --controller-url
+      - http://controller:8000
+      - --offer-cpu-cores
+      - "1"
+      - --offer-memory-mib
+      - "512"
+    environment:
+      DABALLS_API_TOKEN: ${DABALLS_API_TOKEN:?Set DABALLS_API_TOKEN in .env}
+    depends_on:
+      controller:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-b:
+    build: .
+    command:
+      - python
+      - -m
+      - daballs.worker.agent
+      - --worker-id
+      - compose-worker-b
+      - --display-name
+      - Compose Worker B
+      - --controller-url
+      - http://controller:8000
+      - --offer-cpu-cores
+      - "1"
+      - --offer-memory-mib
+      - "512"
+    environment:
+      DABALLS_API_TOKEN: ${DABALLS_API_TOKEN:?Set DABALLS_API_TOKEN in .env}
+    depends_on:
+      controller:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  daballs-data:
